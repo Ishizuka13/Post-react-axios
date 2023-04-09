@@ -1,67 +1,58 @@
 import { useState, useEffect } from "react";
-type Movie = {
-  titulo: string;
-  avatar: string;
-}
+import { Post } from "./Types/Post";
+import {PostForm} from './components/PostForm'
+import { PostItem } from "./components/PostItem";
+import { api } from "./api"; 
 
 const App = () => {
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]); 
   const [loading, setLoading] = useState(false);
 
-  useEffect(()=>{
-    loadMovies();
-  }, [])
 
-  const loadMovies = () =>{
-    fetch('https://api.b7web.com.br/cinema')
-    .then((response) => {
-      return response.json();
-    })
-    .then((json)=>{
-      setMovies(json);
-    })
-    .catch((e)=>{
-      setLoading(false);
-      setMovies([]);
-      console.error(e);
-    })
+  useEffect(()=>{
+    loadPosts();
+  }, []);
+
+  const loadPosts = async() => {
+    setLoading(true);
+    let json = await api.getAllPosts();
+    setLoading(false);
+    setPosts(json);
   }
 
-  // const loadMovies = async() =>{
-  //   try{
-  //   setLoading(true);
-  //   let response = await fetch('https://api.b7web.com.br/cinema');
-  //   let json = await response.json();
-  //   setLoading(false);
-  //   setMovies(json);
-  //   } catch(e) {
-  //     setLoading(false);
-  //     setMovies([]);
-  //     console.error(e);
-  //   }
-  // }
+
+  const handleAddPost = async (title: string, body: string) => 
+  {
+    let json = await api.addNewPost(title, body, 1);
+    if(json.id){
+      alert('post adicionado com sucesso');
+    } else{
+      alert("ocorreu algum erro");
+    }
+  }
+
 
   return (
-    <div>
+    <div className="p-5">
       {loading &&
       <div className="text-6xl">Carregando...</div>
       }
-      {!loading && movies.length > 0 &&
+
+    <PostForm onAdd={handleAddPost}/>
+
+      {!loading && posts.length > 0 &&
       <>
-        <div>Total de Filmes: {movies.length}</div>
-        <div className="grid grid-cols-6 gap-3">
-          {movies.map((item, index)=>(
-            <div key={index}>
-              <img src={item.avatar} className="w-32 block" />
-              {item.titulo}
-            </div>
+        <div>Total de posts: {posts.length}</div>
+        <div>
+          {posts.map((item)=>(
+           <PostItem data={item}/>
           ))}
         </div>
       </>
       }
 
-      {!loading && movies.length === 0 && 
-        <div>Tente novamente mais tarde.</div>
+      {!loading && posts.length === 0 && 
+        <div>Sem posts para exibir.</div>
       }
     </div>
   );
